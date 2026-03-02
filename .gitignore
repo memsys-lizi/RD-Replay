@@ -1,0 +1,72 @@
+# ------------ Unity 生成文件 ------------
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Unity 缓存与自动生成
+MemoryCaptures/
+SysInfo/
+.vsconfig
+
+# ------------ 版本控制不需要的资源 ------------
+*.unitypackage
+*.pkg
+
+# ------------ 操作系统文件 ------------
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+
+# ------------ IDE / 编辑器 ------------
+# Visual Studio / Rider / VSCode
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+
+# Rider
+*.sln.iml
+
+# ------------ Unity 构建输出 ------------
+Build/
+Builds/
+[Pp]ublish/
+
+# ------------ Unity 崩溃与日志 ------------
+*.pid
+*.stacktrace
+*.log
+
+# ------------ 包缓存与依赖 ------------
+# Node / npm / yarn 等（如项目中有使用）
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ------------ 其它临时文件 ------------
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
