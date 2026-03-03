@@ -75,9 +75,6 @@ namespace RDReplay.Core
             _isRecording = true;
 
             Plugin.Log.LogInfo($"[Recorder] Started. levelId={levelId} dspBase={sessionStartDsp:F6}");
-
-            // 提示开始录制
-            ReplayToastUI.ShowRecordingStarted();
         }
 
         public bool IsRecording => _isRecording;

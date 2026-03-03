@@ -41,6 +41,8 @@ namespace RDReplay.UI
         // ── 内部状态 ────────────────────────────────────────────────
         private string        _folderPath;
         private ReplayListUI  _owner;   // 删除后回调刷新列表
+        private float         _lastDeleteClickTime = -999f; // 上次点击删除按钮的时间
+        private const float   DELETE_CONFIRM_WINDOW = 3f;   // 确认删除的时间窗口（秒）
 
         // ── 初始化 ───────────────────────────────────────────────────
 
@@ -116,12 +118,18 @@ namespace RDReplay.UI
             if (!ReplayFileManager.LoadReplay(_folderPath, out ReplayData data))
             {
                 Plugin.Log.LogWarning($"[ReplayItemUI] 签名校验失败，文件可能被篡改: {_folderPath}");
+                ReplayToastUI.Show("回放文件校验失败");
                 return;
             }
 
             ReplayContext.CurrentMode = ReplayMode.Replaying;
+            ReplayContext.CurrentReplayFolder = _folderPath; // 保存文件夹路径，用于重启
             ReplayPlayer.CreateInstance(data);
             ReplayModeEvents.RaiseReplayStarted();
+
+            // 设置静态倍速字段，让 GoToLevel 使用正确的倍速
+            scnGame.levelSpeed = data.levelSpeed;
+
             scnBase.GoToLevel(data.levelId);
         }
 
@@ -129,19 +137,37 @@ namespace RDReplay.UI
 
         private void OnDeleteClicked()
         {
-            try
-            {
-                Directory.Delete(_folderPath, recursive: true);
-                Plugin.Log.LogInfo($"[ReplayItemUI] 已删除: {_folderPath}");
-            }
-            catch (System.Exception ex)
-            {
-                Plugin.Log.LogWarning($"[ReplayItemUI] 删除失败: {ex.Message}");
-                return;
-            }
+            float currentTime = Time.realtimeSinceStartup;
+            float timeSinceLastClick = currentTime - _lastDeleteClickTime;
 
-            // 通知 ReplayListUI 刷新
-            _owner?.RefreshList();
+            // 如果在时间窗口内再次点击，执行删除
+            if (timeSinceLastClick < DELETE_CONFIRM_WINDOW)
+            {
+                try
+                {
+                    Directory.Delete(_folderPath, recursive: true);
+                    Plugin.Log.LogInfo($"[ReplayItemUI] 已删除: {_folderPath}");
+                    ReplayToastUI.Show("回放已删除");
+                }
+                catch (System.Exception ex)
+                {
+                    Plugin.Log.LogWarning($"[ReplayItemUI] 删除失败: {ex.Message}");
+                    ReplayToastUI.Show("删除失败");
+                    return;
+                }
+
+                // 通知 ReplayListUI 刷新
+                _owner?.RefreshList();
+
+                // 重置时间
+                _lastDeleteClickTime = -999f;
+            }
+            else
+            {
+                // 第一次点击，提示用户再次点击确认
+                _lastDeleteClickTime = currentTime;
+                ReplayToastUI.Show("再次点击删除按钮以确认");
+            }
         }
 
         // ── 预览图加载 ───────────────────────────────────────────────

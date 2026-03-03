@@ -101,6 +101,7 @@ namespace RDReplay.Storage
         {
             data = null;
             string path = Path.Combine(replayFolder, "replay.json");
+
             if (!File.Exists(path))
             {
                 Plugin.Log.LogWarning($"[FileManager] replay.json not found: {path}");

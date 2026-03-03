@@ -137,8 +137,10 @@ namespace RDReplay.Patches
             // 回放模式：根据 ReplayContext 覆盖 RDInput 的状态
             if (ReplayContext.CurrentMode != ReplayMode.Replaying) return;
             if (ReplayPlayer.Instance == null || !ReplayPlayer.Instance.IsPlaying) return;
+            // PreStart 阶段不拦截输入，让玩家可以按空格开始游戏
+            if (scnBase.instance is scnGame g && g.gameState == GameState.PreStart) return;
             // 暂停菜单打开时，不接管输入，让玩家可以用键盘操作 RDPauseMenu
-            if (scnBase.instance is scnGame g && g.paused) return;
+            if (scnBase.instance is scnGame game && game.paused) return;
 
             // 1) 节奏键
             RDInput.p1Press     = ReplayContext.ReplayPress[0];

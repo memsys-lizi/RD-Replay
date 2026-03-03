@@ -1,5 +1,7 @@
 using HarmonyLib;
 using RDReplay.Core;
+using RDReplay.UI;
+using RDReplay.Storage;
 using UnityEngine;
 
 namespace RDReplay.Patches
@@ -29,10 +31,43 @@ namespace RDReplay.Patches
 
             // 回放模式时由 ReplayListUI 提前设置好了 ReplayContext.CurrentMode 和 ReplayPlayer，
             // 这里只需重置 RecorderBegan，让 Patch_Update 在 Handmode 时调用 ReplayPlayer.Begin()
+            // 如果 ReplayPlayer.Instance 为 null（重启导致），则重新加载录像文件
             if (ReplayContext.CurrentMode == ReplayMode.Replaying)
             {
                 ReplayContext.RecorderBegan = false;
-                Plugin.Log.LogInfo("[Patch_GameStart] Replay mode detected, RecorderBegan reset.");
+
+                // 检查 ReplayPlayer 是否存在，如果不存在（重启导致），则重新加载录像
+                if (ReplayPlayer.Instance == null)
+                {
+                    if (!string.IsNullOrEmpty(ReplayContext.CurrentReplayFolder))
+                    {
+                        Plugin.Log.LogInfo("[Patch_GameStart] Replay mode detected but ReplayPlayer is null, reloading from file.");
+
+                        if (ReplayFileManager.LoadReplay(ReplayContext.CurrentReplayFolder, out ReplayData data))
+                        {
+                            ReplayPlayer.CreateInstance(data);
+                            ReplayToastUI.Show("重新加载回放");
+                        }
+                        else
+                        {
+                            Plugin.Log.LogError("[Patch_GameStart] Failed to reload replay file!");
+                            ReplayToastUI.Show("回放加载失败");
+                            ReplayContext.CurrentMode = ReplayMode.None;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Plugin.Log.LogError("[Patch_GameStart] Replay mode detected but no replay folder path available! Aborting replay.");
+                        ReplayContext.CurrentMode = ReplayMode.None;
+                        return;
+                    }
+                }
+                else
+                {
+                    Plugin.Log.LogInfo("[Patch_GameStart] Replay mode detected, RecorderBegan reset.");
+                }
+
                 return;
             }
 
@@ -44,6 +79,17 @@ namespace RDReplay.Patches
 
             ReplayRecorder.CreateInstance();
             Plugin.Log.LogInfo("[Patch_GameStart] Recording pending, waiting for Handmode...");
+        }
+
+        [HarmonyPostfix]
+        public static void Postfix()
+        {
+            // 回放模式：在游戏设置完倍速后，用录像中的倍速覆盖
+            if (ReplayContext.CurrentMode == ReplayMode.Replaying && ReplayPlayer.Instance != null)
+            {
+                float recordedSpeed = ReplayPlayer.Instance.Data.levelSpeed;
+                RDTime.speed = recordedSpeed;
+            }
         }
     }
 
@@ -62,6 +108,7 @@ namespace RDReplay.Patches
                 ReplayRecorder.DestroyInstance();
                 ReplayContext.CurrentMode = ReplayMode.None;
                 Plugin.Log.LogInfo("[Patch_GameQuit] Recorder aborted on Quit.");
+                ReplayToastUI.Show("录制已取消");
                 // 录制模式下，保持游戏原有的退回逻辑（返回关卡选择等）
                 return true;
             }
@@ -70,7 +117,9 @@ namespace RDReplay.Patches
                 ReplayPlayer.Instance?.Stop();
                 ReplayPlayer.DestroyInstance();
                 ReplayContext.CurrentMode = ReplayMode.None;
+                ReplayContext.CurrentReplayFolder = null; // 清除文件夹路径
                 Plugin.Log.LogInfo("[Patch_GameQuit] Player stopped on Quit.");
+                ReplayToastUI.Show("回放已停止");
                 ReplayModeEvents.RaiseReplayStopped();
 
                 // 回放模式：退出时一律返回回放列表场景，而不是原本的关卡选择/上一场景

@@ -93,17 +93,7 @@ namespace RDReplay.Core
             var jumpEvent = _data.timeJumps[_timeJumpCursor];
             _timeJumpCursor++;
 
-            Plugin.Log.LogInfo($"[Player] SyncCursorsAfterTimeJump:");
-            Plugin.Log.LogInfo($"  Recorded jump: {jumpEvent.audioPosBefore:F3} -> {jumpEvent.audioPosAfter:F3} (bar {jumpEvent.fromBar} -> {jumpEvent.toBar})");
-            Plugin.Log.LogInfo($"  currentAudioPos: {currentAudioPos:F3}");
-            Plugin.Log.LogInfo($"  _playbackStartDsp (old): {_playbackStartDsp:F3}");
-
-            // 计算时间偏移量：录制时跳过了多少时间
-            double recordedTimeSkip = jumpEvent.audioPosAfter - jumpEvent.audioPosBefore;
-            Plugin.Log.LogInfo($"  Recorded time skip: {recordedTimeSkip:F3}");
-
             // 同步输入事件游标到跳转后的位置
-            int oldInputCursor = _inputCursor;
             while (_inputCursor < _data.inputs.Count &&
                    _data.inputs[_inputCursor].audioPos < jumpEvent.audioPosAfter)
             {
@@ -111,7 +101,6 @@ namespace RDReplay.Core
             }
 
             // 同步判定事件游标
-            int oldHitCursor = _hitCursor;
             while (_hitCursor < _data.hits.Count &&
                    _data.hits[_hitCursor].audioPos < jumpEvent.audioPosAfter)
             {
@@ -148,24 +137,8 @@ namespace RDReplay.Core
                 }
             }
 
-            Plugin.Log.LogInfo($"  Cursor changes: input {oldInputCursor}->{_inputCursor}, hit {oldHitCursor}->{_hitCursor}");
-
-            // ⭐ 关键修复：调整 _playbackStartDsp，补偿录制时跳过的时间
-            // 新的 _playbackStartDsp = currentAudioPos - jumpEvent.audioPosAfter
-            double oldPlaybackStartDsp = _playbackStartDsp;
+            // 调整 _playbackStartDsp，补偿录制时跳过的时间
             _playbackStartDsp = currentAudioPos - jumpEvent.audioPosAfter;
-
-            Plugin.Log.LogInfo($"  _playbackStartDsp (new): {_playbackStartDsp:F3} (delta: {_playbackStartDsp - oldPlaybackStartDsp:F3})");
-
-            // 打印接下来几个事件的信息
-            if (_inputCursor < _data.inputs.Count)
-            {
-                Plugin.Log.LogInfo($"  Next input event: audioPos={_data.inputs[_inputCursor].audioPos:F3}, player={_data.inputs[_inputCursor].player}, action={_data.inputs[_inputCursor].action}");
-            }
-            if (_hitCursor < _data.hits.Count)
-            {
-                Plugin.Log.LogInfo($"  Next hit event: audioPos={_data.hits[_hitCursor].audioPos:F3}, player={_data.hits[_hitCursor].player}, bar={_data.hits[_hitCursor].bar}");
-            }
         }
 
         // ── 输入查询 ────────────────────────────────────────────────
@@ -180,21 +153,10 @@ namespace RDReplay.Core
             // 将当前运行的绝对时间换算成本次回放的「相对起点偏移」
             double elapsed = currentAudioPos - _playbackStartDsp;
 
-            // 添加详细日志
-            if (_inputCursor < _data.inputs.Count)
-            {
-                var nextInput = _data.inputs[_inputCursor];
-                if (due.Count == 0 && System.Math.Abs(nextInput.audioPos - elapsed) < 1.0)
-                {
-                    Plugin.Log.LogInfo($"[Player] CollectDueInputs: elapsed={elapsed:F3}, nextInput.audioPos={nextInput.audioPos:F3}, diff={nextInput.audioPos - elapsed:F3}, cursor={_inputCursor}/{_data.inputs.Count}");
-                }
-            }
-
             while (_inputCursor < _data.inputs.Count &&
                    _data.inputs[_inputCursor].audioPos <= elapsed)
             {
                 due.Add(_data.inputs[_inputCursor]);
-                Plugin.Log.LogInfo($"[Player] Injecting input: player={_data.inputs[_inputCursor].player}, action={_data.inputs[_inputCursor].action}, audioPos={_data.inputs[_inputCursor].audioPos:F3}, elapsed={elapsed:F3}");
                 _inputCursor++;
             }
             return due;

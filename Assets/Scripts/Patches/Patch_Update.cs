@@ -3,6 +3,7 @@ using HarmonyLib;
 using UnityEngine;
 using AudioSettings = UnityEngine.AudioSettings;
 using RDReplay.Core;
+using RDReplay.UI;
 
 namespace RDReplay.Patches
 {
@@ -50,6 +51,7 @@ namespace RDReplay.Patches
 
                 ReplayContext.RecorderBegan = true;
                 ReplayPlayer.Instance.Begin();
+                ReplayToastUI.Show("回放开始");
                 Plugin.Log.LogInfo($"[Patch_Update] ReplayPlayer.Begin() at state={game.gameState}");
                 return;
             }
@@ -83,6 +85,9 @@ namespace RDReplay.Patches
                 isCustom, speed, twoPlayer,
                 p1Skin, p2Skin, dspBase,
                 baseHitMarginP1, baseHitMarginP2);
+
+            // 显示录制开始提示
+            ReplayToastUI.ShowRecordingStarted();
 
             // 对于所有关卡（内置 / 自制），都在游戏开始后尽早截一张图，
             // 作为预览图优先源，避免只截到黑屏或结果界面。

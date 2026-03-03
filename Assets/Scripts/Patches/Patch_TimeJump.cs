@@ -83,17 +83,9 @@ namespace RDReplay.Patches
                 var player = ReplayPlayer.Instance;
                 if (player == null || !player.IsPlaying) return;
 
-                // 获取当前 audioPos（真实 DSP 时间）
-                double currentAudioPos = __instance.audioPos;
-                int currentBar = __instance.barNumber;
-
-                Plugin.Log.LogInfo($"[Patch_TimeJump] ========== TIME JUMP DETECTED ==========");
-                Plugin.Log.LogInfo($"[Patch_TimeJump] Current bar: {currentBar}, Current audioPos: {currentAudioPos:F3}");
-
                 // 使用录制时的 TimeJumpEvent 数据来同步
+                double currentAudioPos = __instance.audioPos;
                 player.SyncCursorsAfterTimeJump(currentAudioPos);
-
-                Plugin.Log.LogInfo($"[Patch_TimeJump] ========== TIME JUMP SYNC COMPLETE ==========");
             }
         }
     }

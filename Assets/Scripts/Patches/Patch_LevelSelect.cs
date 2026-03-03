@@ -103,8 +103,10 @@ namespace RDReplay.Patches
                 {
                     // ReplayManager 被追加在列表末尾（index = list.Count - 1）
                     trav.Field("selectedVerticalIndex").SetValue(list.Count - 1);
-                    // 标记只用一次
+                    // 标记只用一次，并恢复 lastSceneName 避免退出时返回错误场景
                     ReplayContext.ReturnToBasementComputer = false;
+                    // 恢复 lastSceneName 为空或默认值，避免游戏认为我们来自 Ian 桌面
+                    scnBase.lastSceneName = "";
                 }
 
                 // 重新读取最新的 selectedVerticalIndex，避免上面修改后本地 selIndex 还停留在旧值

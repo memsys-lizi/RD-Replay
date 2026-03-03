@@ -74,6 +74,11 @@ namespace RDReplay.Patches
         /// </summary>
         public static bool ReturnToBasementComputer;
 
+        /// <summary>
+        /// 当前正在回放的录像文件夹路径，用于重启时重新加载。
+        /// </summary>
+        public static string CurrentReplayFolder;
+
         // ── 时间跳转暂存（用于 Patch_TimeJump 的 Prefix/Postfix 协作）──────
         /// <summary>待记录的时间跳转：跳转前的小节号（-1 表示无待记录跳转）</summary>
         public static int PendingTimeJumpFromBar = -1;
