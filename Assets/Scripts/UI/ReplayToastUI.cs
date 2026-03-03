@@ -30,8 +30,7 @@ namespace RDReplay.UI
 
         private static ReplayToastUI _instance;
 
-        private readonly Queue<string> _queue = new Queue<string>();
-        private bool _isPlaying;
+        private Coroutine _currentAnimation;
 
         void Awake()
         {
@@ -73,11 +72,11 @@ namespace RDReplay.UI
 
         // ── 对外静态 API ─────────────────────────────────────────────
 
-        /// <summary>显示一条提示文字（入队，按顺序播放）。</summary>
+        /// <summary>显示一条提示文字（立即打断旧提示）。</summary>
         public static void Show(string message)
         {
             if (_instance == null) return;
-            _instance.Enqueue(message);
+            _instance.ShowImmediate(message);
         }
 
         public static void ShowRecordingStarted()
@@ -90,51 +89,45 @@ namespace RDReplay.UI
             Show("回放已保存");
         }
 
-        // ── 队列驱动 ────────────────────────────────────────────────
+        // ── 立即显示（打断旧动画） ────────────────────────────────────
 
-        private void Enqueue(string message)
+        private void ShowImmediate(string message)
         {
-            _queue.Enqueue(message);
-            if (!_isPlaying)
-                StartCoroutine(PlayQueue());
-        }
-
-        private IEnumerator PlayQueue()
-        {
-            _isPlaying = true;
-            while (_queue.Count > 0)
+            // 停止旧动画
+            if (_currentAnimation != null)
             {
-                string msg = _queue.Dequeue();
-                yield return PlaySingle(msg);
+                StopCoroutine(_currentAnimation);
+                _currentAnimation = null;
             }
-            _isPlaying = false;
+
+            // 立即开始新动画
+            _currentAnimation = StartCoroutine(PlaySingle(message));
         }
 
         private IEnumerator PlaySingle(string message)
         {
             if (greenBar == null || whiteBar == null || messageText == null)
+            {
+                _currentAnimation = null;
                 yield break;
+            }
 
             messageText.text = message;
 
-            // 重置：绿色/白色都收回（X 缩放 0），文本透明
-            if (greenBar != null)
-            {
-                greenBar.DOKill();
-                var s = greenBar.localScale;
-                s.x = 0f;
-                greenBar.localScale = s;
-            }
-
-            if (whiteBar != null)
-            {
-                whiteBar.DOKill();
-                var s = whiteBar.localScale;
-                s.x = 0f;
-                whiteBar.localScale = s;
-            }
-
+            // 杀掉所有旧的 DOTween 动画
+            greenBar.DOKill();
+            whiteBar.DOKill();
             canvasGroup.DOKill();
+
+            // 重置：绿色/白色都收回（X 缩放 0），文本透明
+            var greenScale = greenBar.localScale;
+            greenScale.x = 0f;
+            greenBar.localScale = greenScale;
+
+            var whiteScale = whiteBar.localScale;
+            whiteScale.x = 0f;
+            whiteBar.localScale = whiteScale;
+
             canvasGroup.alpha = 0f;
 
             // 绿色先滑入（通过 X 缩放 0 → 1）
@@ -145,7 +138,6 @@ namespace RDReplay.UI
             if (whiteEnterDelay > 0f)
                 yield return new WaitForSeconds(whiteEnterDelay);
 
-            whiteBar.DOKill();
             whiteBar.DOScaleX(1f, whiteEnterDuration).SetEase(Ease.OutCubic);
             yield return new WaitForSeconds(whiteEnterDuration);
 
@@ -163,14 +155,14 @@ namespace RDReplay.UI
             yield return new WaitForSeconds(textFadeDuration);
 
             // 2) 再收白色滑块
-            whiteBar.DOKill();
             whiteBar.DOScaleX(0f, exitStepDuration).SetEase(Ease.InCubic);
             yield return new WaitForSeconds(exitStepDuration);
 
             // 3) 最后收绿色细条
-            greenBar.DOKill();
             greenBar.DOScaleX(0f, exitStepDuration).SetEase(Ease.InCubic);
             yield return new WaitForSeconds(exitStepDuration);
+
+            _currentAnimation = null;
         }
     }
 }
