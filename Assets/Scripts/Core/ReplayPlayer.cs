@@ -43,6 +43,12 @@ namespace RDReplay.Core
         public ReplayData Data => _data;
         public bool IsPlaying => _isPlaying;
 
+        /// <summary>本次回放的起始 DSP 时间，用于 UI 计算相对进度。</summary>
+        public double PlaybackStartDsp => _playbackStartDsp;
+
+        /// <summary>给定当前 scrConductor.audioPos，返回本次回放已经经过的相对时间（秒）。</summary>
+        public double GetElapsed(double currentAudioPos) => currentAudioPos - _playbackStartDsp;
+
         /// <summary>
         /// 游戏进入 Handmode 时由 Patch_GameStart 调用。
         /// 此时游戏的 DSP 基准应与 _data.sessionStartDsp 对齐（通过 Patch_GameStart 强制写入）。

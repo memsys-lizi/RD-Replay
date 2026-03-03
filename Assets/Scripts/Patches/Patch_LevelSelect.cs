@@ -95,10 +95,22 @@ namespace RDReplay.Patches
 
                 // 如果原来选的是第三项，追加之后把索引设回 2
                 if (_wasOnReplayOption)
+                {
                     trav.Field("selectedVerticalIndex").SetValue(2);
+                }
+                // 如果是从回放场景返回 LevelSelect，则强制默认选中我们的 ReplayManager 选项
+                else if (ReplayContext.ReturnToBasementComputer)
+                {
+                    // ReplayManager 被追加在列表末尾（index = list.Count - 1）
+                    trav.Field("selectedVerticalIndex").SetValue(list.Count - 1);
+                    // 标记只用一次
+                    ReplayContext.ReturnToBasementComputer = false;
+                }
+
+                // 重新读取最新的 selectedVerticalIndex，避免上面修改后本地 selIndex 还停留在旧值
+                int selIndex = trav.Field("selectedVerticalIndex").GetValue<int>();
 
                 // 若当前垂直选中的是回放项，强制覆盖 description 文本
-                int selIndex = trav.Field("selectedVerticalIndex").GetValue<int>();
                 if (selIndex >= 0 && selIndex < list.Count)
                 {
                     var currentDest = list[selIndex];

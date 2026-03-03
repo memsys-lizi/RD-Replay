@@ -68,6 +68,12 @@ namespace RDReplay.Patches
         /// <summary>关卡所在目录，用于复制预览图</summary>
         public static string PendingLevelDir;
 
+        /// <summary>
+        /// 标记下一次进入 scnLevelSelect 时，应该把相机放回地下室电脑（Ian 桌面）。
+        /// 从回放场景返回关卡选择前由 ReplayListUI 设置。
+        /// </summary>
+        public static bool ReturnToBasementComputer;
+
         public static void Reset()
         {
             CurrentMode = ReplayMode.None;

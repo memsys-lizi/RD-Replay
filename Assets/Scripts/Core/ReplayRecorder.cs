@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using RDReplay.Storage;
+using RDReplay.UI;
 
 namespace RDReplay.Core
 {
@@ -74,6 +75,9 @@ namespace RDReplay.Core
             _isRecording = true;
 
             Plugin.Log.LogInfo($"[Recorder] Started. levelId={levelId} dspBase={sessionStartDsp:F6}");
+
+            // 提示开始录制
+            ReplayToastUI.ShowRecordingStarted();
         }
 
         public bool IsRecording => _isRecording;

@@ -1,5 +1,6 @@
 using HarmonyLib;
 using RDReplay.Core;
+using UnityEngine;
 
 namespace RDReplay.Patches
 {
@@ -53,7 +54,7 @@ namespace RDReplay.Patches
     public static class Patch_GameQuit
     {
         [HarmonyPrefix]
-        public static void Prefix()
+        public static bool Prefix()
         {
             if (ReplayContext.CurrentMode == ReplayMode.Recording)
             {
@@ -61,6 +62,8 @@ namespace RDReplay.Patches
                 ReplayRecorder.DestroyInstance();
                 ReplayContext.CurrentMode = ReplayMode.None;
                 Plugin.Log.LogInfo("[Patch_GameQuit] Recorder aborted on Quit.");
+                // 录制模式下，保持游戏原有的退回逻辑（返回关卡选择等）
+                return true;
             }
             else if (ReplayContext.CurrentMode == ReplayMode.Replaying)
             {
@@ -69,7 +72,15 @@ namespace RDReplay.Patches
                 ReplayContext.CurrentMode = ReplayMode.None;
                 Plugin.Log.LogInfo("[Patch_GameQuit] Player stopped on Quit.");
                 ReplayModeEvents.RaiseReplayStopped();
+
+                // 回放模式：退出时一律返回回放列表场景，而不是原本的关卡选择/上一场景
+                Time.timeScale = 1f; // 确保从暂停菜单退出后恢复时间流逝，否则后续场景中的 DOTween/Update 不会运行
+                scnBase.GoToScene("ScnReplay");
+                return false; // 跳过原始 Quit 逻辑，避免再跳回 LevelSelect
             }
+
+            // 非录制/回放模式，保持原始 Quit 行为
+            return true;
         }
     }
 }

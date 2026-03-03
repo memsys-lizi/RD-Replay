@@ -15,7 +15,8 @@
         "RDTools.dll",
         "Newtonsoft.Json.dll",
         "0Harmony.dll",
-        "BepInEx.dll"
+        "BepInEx.dll",
+        "Assembly-CSharp-firstpass.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

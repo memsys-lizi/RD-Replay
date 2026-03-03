@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
 using RDReplay.Patches;
+using RDReplay.UI;
 
 [BepInPlugin("com.rdreplay.mod", "RD-Replay", "0.1.0")]
 public class ModEntry : BaseUnityPlugin
@@ -41,6 +42,31 @@ public class ModEntry : BaseUnityPlugin
         // 挂载 SaveCoordinator（跨场景持久存活）
         var coordinatorGO = new GameObject("[RDReplay_SaveCoordinator]");
         coordinatorGO.AddComponent<SaveCoordinator>();
+
+        // 尝试从 resources AssetBundle 实例化提示 UI 预制体（名称需与打包时保持一致）
+        if (_resourcesBundle != null)
+        {
+            try
+            {
+                var toastPrefab = _resourcesBundle.LoadAsset<GameObject>("RDReplay_Toast");
+                if (toastPrefab != null)
+                {
+                    Object.Instantiate(toastPrefab);
+                }
+                else
+                {
+                    Logger.LogWarning("[ModEntry] RDReplay_Toast prefab not found in resources bundle. Toast UI disabled.");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogWarning($"[ModEntry] Failed to load RDReplay_Toast prefab: {ex.Message}");
+            }
+        }
+        else
+        {
+            Logger.LogWarning("[ModEntry] resources bundle not loaded. Toast UI disabled.");
+        }
 
         // 应用所有 Harmony Patch
         _harmony = new Harmony("com.rdreplay.mod");

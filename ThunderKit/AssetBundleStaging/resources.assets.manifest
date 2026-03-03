@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2127923198
+CRC: 1664677876
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 64417a58078ab229517b7a24ff0b93e5
+    Hash: 67a11dc2cc9f2cf1e3af0f976dc00388
   TypeTreeHash:
     serializedVersion: 2
-    Hash: b3c0950e19c5ed495504c0625cfef1af
+    Hash: 3f81c113018ace783bd76c6986ea003c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 64417a58078ab229517b7a24ff0b93e5
+    Hash: 67a11dc2cc9f2cf1e3af0f976dc00388
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -25,13 +25,19 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: de2177fef18a678438b562cee689e5cb, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: c69d376fcdf16b64b9f8a4413ed76bdf, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -40,7 +46,11 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 222
   Script: {instanceID: 0}
+- Class: 223
+  Script: {instanceID: 0}
 - Class: 224
+  Script: {instanceID: 0}
+- Class: 225
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: Unity.TextMeshPro
@@ -80,9 +90,10 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.SpriteState
 Assets:
-- Assets/Resources/Texture2D/editor-button-2px.png
+- Assets/Resources/PreFabs/RDReplay_Toast.prefab
 - Assets/Resources/PreFabs/ReplayItem.prefab
 - Assets/Resources/Texture2D/editor-menu-new-file.png
+- Assets/Resources/Texture2D/editor-button-2px.png
 - Assets/TextMesh Pro/Shaders/TMP_SDF.shader
 - Assets/Resources/Texture2D/Score.png
 - Assets/Resources/Texture2D/editor-button-2px-checkerboard.png

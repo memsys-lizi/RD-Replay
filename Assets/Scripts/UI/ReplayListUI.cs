@@ -2,7 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using DG.Tweening;
 using RDReplay.Storage;
+using RDReplay.Patches;
 
 namespace RDReplay.UI
 {
@@ -16,7 +18,17 @@ namespace RDReplay.UI
     {
         [Header("顶部")]
         public Button  backButton;
+        public Button  settingsButton;      // 打开/关闭设置面板
+        public Button  aboutButton;         // 打开/关闭关于面板
         public TMP_Text titleText;
+
+        [Header("设置")]
+        public ReplaySettingsUI settingsUI; // 设置面板控制脚本
+
+        [Header("关于")]
+        public RectTransform aboutPanelRoot; // 关于面板根节点（缩放动画），面板内容你自己放
+        public float aboutTweenDuration = 0.2f;
+        private bool _aboutVisible;
 
         [Header("列表")]
         public Transform  itemContainer;  // ScrollView > Viewport > Content
@@ -33,7 +45,35 @@ namespace RDReplay.UI
                 titleText.text = "回放系统";
 
             backButton?.onClick.RemoveAllListeners();
-            backButton?.onClick.AddListener(() => SceneManager.LoadScene("scnLevelSelect"));
+            backButton?.onClick.AddListener(() =>
+            {
+                // 告诉下一个 LevelSelect：我们是从回放界面返回的，应该把相机放在地下室电脑处
+                ReplayContext.ReturnToBasementComputer = true;
+                scnBase.GoToScene("scnLevelSelect");
+            });
+
+            if (settingsButton != null)
+            {
+                settingsButton.onClick.RemoveAllListeners();
+                settingsButton.onClick.AddListener(OnSettingsButtonClicked);
+            }
+
+            if (aboutButton != null)
+            {
+                aboutButton.onClick.RemoveAllListeners();
+                aboutButton.onClick.AddListener(OnAboutButtonClicked);
+            }
+
+            // 关于面板默认隐藏（缩放为 0），内容由你在 Unity 里布置
+            if (aboutPanelRoot != null)
+            {
+                aboutPanelRoot.localScale = Vector3.zero;
+                _aboutVisible = false;
+            }
+
+            // 若未在 Inspector 赋值，尝试在子物体里自动寻找设置 UI
+            if (settingsUI == null)
+                settingsUI = GetComponentInChildren<ReplaySettingsUI>(includeInactive: true);
 
             RefreshList();
         }
@@ -60,6 +100,25 @@ namespace RDReplay.UI
                 var item = go.GetComponent<ReplayItemUI>();
                 item?.Setup(folder, meta, this);
             }
+        }
+
+        private void OnSettingsButtonClicked()
+        {
+            if (settingsUI != null)
+                settingsUI.TogglePanel();
+        }
+
+        private void OnAboutButtonClicked()
+        {
+            if (aboutPanelRoot == null) return;
+
+            _aboutVisible = !_aboutVisible;
+            Vector3 targetScale = _aboutVisible ? Vector3.one : Vector3.zero;
+
+            aboutPanelRoot.DOKill();
+            aboutPanelRoot
+                .DOScale(targetScale, aboutTweenDuration)
+                .SetEase(_aboutVisible ? DG.Tweening.Ease.OutBack : DG.Tweening.Ease.InBack);
         }
     }
 }

@@ -36,21 +36,9 @@ namespace RDReplay.UI
 
         private static ReplayControlUI _instance;
         private bool _panelHidden;
-        
 
-        // 动画相关：手动补间
-        private bool _isAnimatingPanel = false;
-        private float _panelAnimStartY;
-        private float _panelAnimEndY;
-        private float _panelAnimTime;
-        private float _panelAnimDuration = 0.2f;
-
-        // 按钮图标旋转相关
-        private bool _isRotatingIcon = false;
-        private float _iconAnimStartZ;
-        private float _iconAnimEndZ;
-        private float _iconAnimTime;
-        private Transform _iconTransform;
+        // 面板动画时长（统一用 DOTween）
+        private const float PanelTweenDuration = 0.2f;
 
         void Awake()
         {
@@ -70,12 +58,13 @@ namespace RDReplay.UI
             if (backButton != null)        backButton.onClick.AddListener(OnBackClicked);
             if (togglePanelButton != null) togglePanelButton.onClick.AddListener(OnTogglePanelClicked);
 
+            // 控制面板初始始终为隐藏y，并且_hidden=true，这样不管后续怎么切换状态都始终和_hidden逻辑一致
             if (controlPanel != null)
             {
                 var pos = controlPanel.anchoredPosition;
-                pos.y = shownY;
+                pos.y = hiddenY;
                 controlPanel.anchoredPosition = pos;
-                _panelHidden = false;
+                _panelHidden = true;
             }
 
             // 订阅回放模式切换事件
@@ -111,7 +100,10 @@ namespace RDReplay.UI
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
 
-            double rel = _conductor.audioPos - _data.sessionStartDsp;
+            // 使用 ReplayPlayer 的起始 DSP 时间来计算相对进度，避免多次回放/不同起点造成错乱
+            double rel = (_player != null)
+                ? _player.GetElapsed(_conductor.audioPos)
+                : (_conductor.audioPos - _data.sessionStartDsp);
             float t = _data.duration > 0f ? Mathf.Clamp01((float)(rel / _data.duration)) : 0f;
 
             if (progressFill != null)
@@ -123,46 +115,19 @@ namespace RDReplay.UI
 
             if (currentTimeText != null)
                 currentTimeText.text = FormatTime(Mathf.Clamp((float)rel, 0f, _data.duration));
-
-            // 动画控制面板移动（手动补间）
-            if (_isAnimatingPanel && controlPanel != null)
-            {
-                _panelAnimTime += Time.unscaledDeltaTime;
-                float animT = Mathf.Clamp01(_panelAnimTime / _panelAnimDuration);
-                // ease: OutCubic
-                animT = 1f - Mathf.Pow(1f - animT, 3f);
-                float y = Mathf.Lerp(_panelAnimStartY, _panelAnimEndY, animT);
-                var pos = controlPanel.anchoredPosition;
-                pos.y = y;
-                controlPanel.anchoredPosition = pos;
-
-                if (animT >= 1f)
-                {
-                    _isAnimatingPanel = false;
-                }
-            }
-
-            // 动画旋转图标（手动补间）
-            if (_isRotatingIcon && _iconTransform != null)
-            {
-                _iconAnimTime += Time.unscaledDeltaTime;
-                float rotT = Mathf.Clamp01(_iconAnimTime / _panelAnimDuration);
-                // ease: OutCubic
-                rotT = 1f - Mathf.Pow(1f - rotT, 3f);
-                float z = Mathf.Lerp(_iconAnimStartZ, _iconAnimEndZ, rotT);
-                _iconTransform.localRotation = Quaternion.Euler(0f, 0f, z);
-
-                if (rotT >= 1f)
-                {
-                    _isRotatingIcon = false;
-                }
-            }
         }
 
         private void OnReplayModeChanged(bool isReplaying)
         {
             if (isReplaying)
             {
+                // 若设置中关闭了控制 UI，则进入回放时完全不显示进度条/控制条
+                if (!ReplaySettings.AutoOpenControlPanelOnReplay)
+                {
+                    SetVisible(false);
+                    return;
+                }
+
                 // 进入回放模式：刷新引用，显示 UI
                 _game      = scnGame.instance;
                 _conductor = scrConductor.instance;
@@ -182,6 +147,27 @@ namespace RDReplay.UI
                     var s = progressFill.localScale;
                     s.x = 0f;
                     progressFill.localScale = s;
+                }
+
+                // 每次进入回放都把控制面板重置为隐藏状态并且 _panelHidden = true
+                if (controlPanel != null)
+                {
+                    controlPanel.DOKill();
+                    var pos = controlPanel.anchoredPosition;
+                    pos.y = hiddenY;
+                    controlPanel.anchoredPosition = pos;
+                    _panelHidden = true;
+                }
+
+                // 自动展开 ：如果设置AutoOpenControlPanelOnReplay为true，则直接显示面板，不触发OnTogglePanelClicked
+                // 正确做法是直接展开到shownY，而不是模拟点击按钮，因为按钮逻辑是切换
+                if (ReplaySettings.AutoOpenControlPanelOnReplay && controlPanel != null)
+                {
+                    controlPanel.DOKill();
+                    var pos = controlPanel.anchoredPosition;
+                    pos.y = shownY;
+                    controlPanel.anchoredPosition = pos;
+                    _panelHidden = false;
                 }
 
                 SetVisible(true);
@@ -230,31 +216,10 @@ namespace RDReplay.UI
             _panelHidden = !_panelHidden;
             float targetY = _panelHidden ? hiddenY : shownY;
 
-            // 停止动画
-            _isAnimatingPanel = false;
-
-            // 获取动画起点
-            float currentY = controlPanel.anchoredPosition.y;
-            _panelAnimStartY = currentY;
-            _panelAnimEndY = targetY;
-            _panelAnimTime = 0f;
-            _isAnimatingPanel = true;
-
-            // 旋转隐藏按钮图标（Z 轴 0 / 90，手动画）
-            var img = togglePanelButton.GetComponent<Image>();
-            if (img != null)
-            {
-                float currentZ = img.transform.localEulerAngles.z;
-                // 修正正负角度
-                if (currentZ > 180f) currentZ -= 360f;
-
-                float targetZ = _panelHidden ? 0f : 90f;
-                _iconAnimStartZ = currentZ;
-                _iconAnimEndZ = targetZ;
-                _iconAnimTime = 0f;
-                _iconTransform = img.transform;
-                _isRotatingIcon = true;
-            }
+            // 用 DOTween 做面板 Y 方向动画
+            controlPanel.DOKill();
+            controlPanel.DOAnchorPosY(targetY, PanelTweenDuration).SetEase(Ease.OutCubic);
         }
+
     }
 }

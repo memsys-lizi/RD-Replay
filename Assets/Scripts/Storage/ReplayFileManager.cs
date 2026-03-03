@@ -5,6 +5,7 @@ using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 using RDReplay.Core;
+using RDReplay.UI;
 
 namespace RDReplay.Storage
 {
@@ -22,22 +23,39 @@ namespace RDReplay.Storage
     {
         // ── 路径 ────────────────────────────────────────────────────
 
-        /// <summary>回放根目录，懒加载</summary>
+        /// <summary>回放根目录，懒加载（支持 ReplaySettings 自定义覆盖）。</summary>
         public static string ReplaysRoot
         {
             get
             {
                 if (string.IsNullOrEmpty(_replaysRoot))
                 {
-                    _replaysRoot = Path.Combine(
-                        Application.persistentDataPath,
-                        "RhythmDoctor", "Replays");
+                    // 优先使用用户在设置中自定义的根目录
+                    string overrideRoot = ReplaySettings.ReplaysRootOverride;
+                    if (!string.IsNullOrEmpty(overrideRoot))
+                    {
+                        _replaysRoot = overrideRoot;
+                    }
+                    else
+                    {
+                        _replaysRoot = Path.Combine(
+                            Application.persistentDataPath,
+                            "RhythmDoctor", "Replays");
+                    }
                     Directory.CreateDirectory(_replaysRoot);
                 }
                 return _replaysRoot;
             }
         }
         private static string _replaysRoot;
+
+        /// <summary>
+        /// 当用户在设置中修改回放根目录时，重置缓存，下次访问 ReplaysRoot 时重新计算。
+        /// </summary>
+        public static void RefreshRootFromSettings()
+        {
+            _replaysRoot = null;
+        }
 
         // ── 保存 ────────────────────────────────────────────────────
 
@@ -67,6 +85,9 @@ namespace RDReplay.Storage
             File.WriteAllText(Path.Combine(folderPath, "meta.json"), metaJson);
 
             Plugin.Log.LogInfo($"[FileManager] Saved replay to: {folderPath}");
+
+            // 弹出右上角提示
+            ReplayToastUI.ShowReplaySaved();
             return folderPath;
         }
 
