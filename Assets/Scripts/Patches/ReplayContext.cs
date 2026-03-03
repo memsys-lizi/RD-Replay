@@ -74,6 +74,16 @@ namespace RDReplay.Patches
         /// </summary>
         public static bool ReturnToBasementComputer;
 
+        // ── 时间跳转暂存（用于 Patch_TimeJump 的 Prefix/Postfix 协作）──────
+        /// <summary>待记录的时间跳转：跳转前的小节号（-1 表示无待记录跳转）</summary>
+        public static int PendingTimeJumpFromBar = -1;
+
+        /// <summary>待记录的时间跳转：跳转目标小节号</summary>
+        public static int PendingTimeJumpToBar = -1;
+
+        /// <summary>待记录的时间跳转：跳转前的 audioPos</summary>
+        public static double PendingTimeJumpAudioPosBefore = 0.0;
+
         public static void Reset()
         {
             CurrentMode = ReplayMode.None;
@@ -95,6 +105,10 @@ namespace RDReplay.Patches
                 LogicalIsPressed[i] = false;
                 LogicalRelease[i] = false;
             }
+
+            PendingTimeJumpFromBar = -1;
+            PendingTimeJumpToBar = -1;
+            PendingTimeJumpAudioPosBefore = 0.0;
         }
     }
 }

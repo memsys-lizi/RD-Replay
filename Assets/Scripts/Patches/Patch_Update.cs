@@ -92,13 +92,13 @@ namespace RDReplay.Patches
             Plugin.Log.LogInfo($"[Patch_Update] RecorderBegan at dspBase={dspBase:F6}, state={game.gameState}");
         }
 
-        // ── 回放输入注入（已迁移到 RDInput.Update） ──────────────────
+        // ── 回放输入注入 ──────────────────────────────────────────
 
         private static void HandleReplayInput(scnGame game)
         {
-            // 现在的回放输入完全通过 Patch_RDInput(RDInput.Update) 来驱动，
-            // 这里不再负责从 ReplayPlayer 中取事件和注入输入。
-            if (ReplayContext.CurrentMode != ReplayMode.Replaying) return;
+            // 回放输入已经完全通过 Patch_RDInput(RDInput.Update) 来驱动
+            // 时间跳转由游戏自然触发（通过注入的 p1IsPressed/p2IsPressed 让 skippingCutsceneElapsedTime 累积）
+            // 我们只需要在 Patch_TimeJump 的 Postfix 中同步游标
         }
 
         // ── 内部工具 ─────────────────────────────────────────────────

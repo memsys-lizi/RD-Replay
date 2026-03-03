@@ -33,6 +33,72 @@ namespace RDReplay.Core
     }
 
     /// <summary>
+    /// 时间轴跳转事件（Cutscene Skip、Checkpoint 等导致的 ScrubToBarNum 调用）
+    /// </summary>
+    public class TimeJumpEvent
+    {
+        /// <summary>跳转发生时的 audioPos（跳转前，相对 sessionStartDsp）</summary>
+        public double audioPosBefore;
+
+        /// <summary>跳转后的 audioPos（相对 sessionStartDsp）</summary>
+        public double audioPosAfter;
+
+        /// <summary>跳转前的小节号</summary>
+        public int fromBar;
+
+        /// <summary>跳转到的目标小节号</summary>
+        public int toBar;
+
+        /// <summary>跳转原因："cutscene_skip" / "checkpoint" / "scrub" / "other"</summary>
+        public string reason;
+    }
+
+    /// <summary>
+    /// 游戏状态变化事件（GameState 切换）
+    /// </summary>
+    public class GameStateEvent
+    {
+        /// <summary>状态变化时的 audioPos（相对 sessionStartDsp）</summary>
+        public double audioPos;
+
+        /// <summary>变化前的状态（GameState 枚举值）</summary>
+        public int fromState;
+
+        /// <summary>变化后的状态（GameState 枚举值）</summary>
+        public int toState;
+
+        /// <summary>当前小节号</summary>
+        public int barNumber;
+    }
+
+    /// <summary>
+    /// Miss 判定事件（玩家未按，拍子自动 Miss）
+    /// </summary>
+    public class MissEvent
+    {
+        /// <summary>Miss 发生时的 audioPos（相对 sessionStartDsp）</summary>
+        public double audioPos;
+
+        /// <summary>0 = P1, 1 = P2, 2 = CPU</summary>
+        public int player;
+
+        /// <summary>Miss 所在轨道 ID</summary>
+        public int rowID;
+
+        /// <summary>所在小节号</summary>
+        public int bar;
+
+        /// <summary>拍子的 inputTime（预期按键时间）</summary>
+        public double beatInputTime;
+
+        /// <summary>错误权重</summary>
+        public float weight;
+
+        /// <summary>是否是 Hold 拍</summary>
+        public bool isHoldBeat;
+    }
+
+    /// <summary>
     /// 单次按键/松开事件
     /// </summary>
     public class InputEvent
@@ -114,7 +180,7 @@ namespace RDReplay.Core
     {
         // ── 版本 & 兼容性 ──────────────────────────────────────────
         /// <summary>回放格式版本，变更数据结构时递增</summary>
-        public int version = 1;
+        public int version = 2;
 
         /// <summary>录制时的游戏版本号，用于兼容性提示</summary>
         public string gameVersion;
@@ -186,6 +252,21 @@ namespace RDReplay.Core
         /// 用于菜单、关卡分支等非节奏判定逻辑的重放。
         /// </summary>
         public List<LogicalInputEvent> logicalInputs = new List<LogicalInputEvent>();
+
+        /// <summary>
+        /// 时间轴跳转事件（Cutscene Skip、Checkpoint 等），按 audioPosBefore 升序排列。
+        /// </summary>
+        public List<TimeJumpEvent> timeJumps = new List<TimeJumpEvent>();
+
+        /// <summary>
+        /// 游戏状态变化事件（GameState 切换），按 audioPos 升序排列。
+        /// </summary>
+        public List<GameStateEvent> gameStates = new List<GameStateEvent>();
+
+        /// <summary>
+        /// Miss 判定事件（玩家未按，拍子自动 Miss），按 audioPos 升序排列。
+        /// </summary>
+        public List<MissEvent> misses = new List<MissEvent>();
 
         // ── 成绩 ───────────────────────────────────────────────────
         public ReplayResult result;

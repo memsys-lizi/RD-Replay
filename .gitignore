@@ -69,4 +69,7 @@ yarn-error.log*
 *.bak
 *.swp
 *.swo
+CLAUDE.md
 
+# ------------ ThunderKit 构建文件 ------------
+ThunderKit/

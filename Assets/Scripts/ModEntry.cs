@@ -25,6 +25,16 @@ public class ModEntry : BaseUnityPlugin
     {
         Instance = this;
 
+        // 关闭 DOTween 的调试日志，避免 "This Tween has been killed" 等警告
+        try
+        {
+            DG.Tweening.DOTween.debugMode = false;
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogWarning($"[ModEntry] Failed to disable DOTween debug mode: {ex.Message}");
+        }
+
         // 加载 AssetBundle
         string scenesPath    = Path.Combine(ModPath, "scenes.assets");
         string resourcesPath = Path.Combine(ModPath, "resources.assets");

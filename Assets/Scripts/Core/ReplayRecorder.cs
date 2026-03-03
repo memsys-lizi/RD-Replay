@@ -163,6 +163,59 @@ namespace RDReplay.Core
             _data.logicalInputs.Add(ev);
         }
 
+        /// <summary>记录时间轴跳转事件（Cutscene Skip、Checkpoint 等导致的 ScrubToBarNum 调用）。</summary>
+        public void RecordTimeJump(double audioPosBefore, double audioPosAfter, int fromBar, int toBar, string reason)
+        {
+            if (!_isRecording) return;
+
+            var ev = new TimeJumpEvent
+            {
+                audioPosBefore = audioPosBefore - _data.sessionStartDsp,
+                audioPosAfter  = audioPosAfter - _data.sessionStartDsp,
+                fromBar        = fromBar,
+                toBar          = toBar,
+                reason         = reason,
+            };
+
+            _data.timeJumps.Add(ev);
+            Plugin.Log.LogInfo($"[Recorder] TimeJump: bar {fromBar} -> {toBar}, reason={reason}");
+        }
+
+        /// <summary>记录游戏状态变化事件（GameState 切换）。</summary>
+        public void RecordGameState(double audioPos, int fromState, int toState, int barNumber)
+        {
+            if (!_isRecording) return;
+
+            var ev = new GameStateEvent
+            {
+                audioPos  = audioPos - _data.sessionStartDsp,
+                fromState = fromState,
+                toState   = toState,
+                barNumber = barNumber,
+            };
+
+            _data.gameStates.Add(ev);
+        }
+
+        /// <summary>记录 Miss 判定事件（玩家未按，拍子自动 Miss）。</summary>
+        public void RecordMiss(double audioPos, int player, int rowID, int bar, double beatInputTime, float weight, bool isHoldBeat)
+        {
+            if (!_isRecording) return;
+
+            var ev = new MissEvent
+            {
+                audioPos      = audioPos - _data.sessionStartDsp,
+                player        = player,
+                rowID         = rowID,
+                bar           = bar,
+                beatInputTime = beatInputTime - _data.sessionStartDsp,
+                weight        = weight,
+                isHoldBeat    = isHoldBeat,
+            };
+
+            _data.misses.Add(ev);
+        }
+
         /// <summary>
         /// 游戏结束时调用，写入成绩并停止录制。
         /// 不负责保存文件，保存操作由外部（Patch_EndLevel 监听 Ctrl+R）触发。
