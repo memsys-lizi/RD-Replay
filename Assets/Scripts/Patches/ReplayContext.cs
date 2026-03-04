@@ -69,12 +69,6 @@ namespace RDReplay.Patches
         public static string PendingLevelDir;
 
         /// <summary>
-        /// 标记下一次进入 scnLevelSelect 时，应该把相机放回地下室电脑（Ian 桌面）。
-        /// 从回放场景返回关卡选择前由 ReplayListUI 设置。
-        /// </summary>
-        public static bool ReturnToBasementComputer;
-
-        /// <summary>
         /// 当前正在回放的录像文件夹路径，用于重启时重新加载。
         /// </summary>
         public static string CurrentReplayFolder;

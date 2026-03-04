@@ -47,9 +47,7 @@ namespace RDReplay.UI
             backButton?.onClick.RemoveAllListeners();
             backButton?.onClick.AddListener(() =>
             {
-                // 告诉下一个 LevelSelect：我们是从回放界面返回的，应该把相机放在地下室电脑处
-                ReplayContext.ReturnToBasementComputer = true;
-                scnBase.GoToScene("scnLevelSelect");
+                scnBase.GoToScene("scnCLS");
             });
 
             if (settingsButton != null)
