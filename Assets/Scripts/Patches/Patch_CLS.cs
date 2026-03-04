@@ -95,7 +95,7 @@ namespace RDReplay.Patches
 
                 // 手动设置位置：放在 Exit 下方
                 var pos = exitOption.rect.anchoredPosition;
-                pos.y -= 100f; // 向下偏移 100 单位
+                pos.y -= 115f; // 向下偏移 100 单位
                 replayRect.anchoredPosition = pos;
 
                 Plugin.Log.LogInfo($"[Patch_CLS] Set Replay position to: {replayRect.anchoredPosition}");
